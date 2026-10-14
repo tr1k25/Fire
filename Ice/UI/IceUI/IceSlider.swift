@@ -3,7 +3,6 @@
 //  Ice
 //
 
-import CompactSlider
 import SwiftUI
 
 struct IceSlider<Value: BinaryFloatingPoint, ValueLabel: View, ValueLabelSelectability: TextSelectability>: View {

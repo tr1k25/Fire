@@ -34,6 +34,14 @@ final class MenuBarManager: ObservableObject {
     /// The managed sections in the menu bar.
     private(set) var sections = [MenuBarSection]()
 
+    /// Covers hidden items on macOS versions where they cannot be pushed out of the menu bar.
+    private var hiddenItemCover: HiddenItemCover?
+
+    /// The frames of the menu bar items found through the accessibility API (CoreGraphics coordinates).
+    var accessibilityItemFrames: [CGRect] {
+        hiddenItemCover?.allItemFrames ?? []
+    }
+
     /// The panel that contains the Ice Bar interface.
     let iceBarPanel: IceBarPanel
 
@@ -58,6 +66,11 @@ final class MenuBarManager: ObservableObject {
         initializeSections()
         configureCancellables()
         iceBarPanel.performSetup()
+        if let appState {
+            let cover = HiddenItemCover(appState: appState)
+            hiddenItemCover = cover
+            cover.performSetup()
+        }
     }
 
     /// Performs the initial setup of the menu bar manager's sections.
@@ -288,8 +301,56 @@ final class MenuBarManager: ObservableObject {
         }
     }
 
+    /// Returns the frame of the frontmost application's menus, using the application's own
+    /// accessibility menu bar. The system-wide element lookup no longer finds the menu bar
+    /// on macOS 27.
+    private func accessibilityApplicationMenuFrame() -> CGRect? {
+        guard let app = NSWorkspace.shared.frontmostApplication else {
+            return nil
+        }
+        let element = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(element, 0.2)
+        var bar: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(element, kAXMenuBarAttribute as CFString, &bar) == .success,
+            let bar,
+            CFGetTypeID(bar) == AXUIElementGetTypeID()
+        else {
+            return nil
+        }
+        var children: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(bar as! AXUIElement, kAXChildrenAttribute as CFString, &children) == .success,
+            let items = children as? [AXUIElement]
+        else {
+            return nil
+        }
+        var union = CGRect.null
+        for item in items {
+            var position: CFTypeRef?
+            var size: CFTypeRef?
+            AXUIElementCopyAttributeValue(item, kAXPositionAttribute as CFString, &position)
+            AXUIElementCopyAttributeValue(item, kAXSizeAttribute as CFString, &size)
+            var point = CGPoint.zero
+            var extent = CGSize.zero
+            guard
+                let position, let size,
+                AXValueGetValue(position as! AXValue, .cgPoint, &point),
+                AXValueGetValue(size as! AXValue, .cgSize, &extent),
+                extent.width > 0
+            else {
+                continue
+            }
+            union = union.union(CGRect(origin: point, size: extent))
+        }
+        return union.isNull || union.width <= 0 ? nil : union
+    }
+
     /// Returns the frame of the application menu for the given display.
     func getApplicationMenuFrame(for displayID: CGDirectDisplayID) -> CGRect? {
+        if let frame = accessibilityApplicationMenuFrame() {
+            return frame
+        }
         let displayBounds = CGDisplayBounds(displayID)
 
         guard
@@ -327,7 +388,7 @@ final class MenuBarManager: ObservableObject {
 
     /// Shows the right-click menu.
     func showRightClickMenu(at point: CGPoint) {
-        let menu = NSMenu(title: "Ice")
+        let menu = NSMenu(title: "Fire")
 
         let editItem = NSMenuItem(
             title: "Edit Menu Bar Appearance…",
@@ -340,7 +401,7 @@ final class MenuBarManager: ObservableObject {
         menu.addItem(.separator())
 
         let settingsItem = NSMenuItem(
-            title: "Ice Settings…",
+            title: "Fire Settings…",
             action: #selector(AppDelegate.openSettingsWindow),
             keyEquivalent: ","
         )

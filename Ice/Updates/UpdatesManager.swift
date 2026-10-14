@@ -1,16 +1,21 @@
 //
 //  UpdatesManager.swift
-//  Ice
+//  Fire
 //
 
-import Sparkle
 import SwiftUI
 
 /// Manager for app updates.
+///
+/// Fire does not ship an updater framework. Instead, it looks at the latest GitHub release
+/// and offers to open its download page when a newer version exists.
 @MainActor
 final class UpdatesManager: NSObject, ObservableObject {
+    private static let latestReleaseAPI = URL(string: "https://api.github.com/repos/tr1k25/Fire/releases/latest")!
+    private static let releasesPage = URL(string: "https://github.com/tr1k25/Fire/releases/latest")!
+
     /// A Boolean value that indicates whether the user can check for updates.
-    @Published var canCheckForUpdates = false
+    @Published var canCheckForUpdates = true
 
     /// The date of the last update check.
     @Published var lastUpdateCheckDate: Date?
@@ -18,37 +23,14 @@ final class UpdatesManager: NSObject, ObservableObject {
     /// The shared app state.
     private(set) weak var appState: AppState?
 
-    /// The underlying updater controller.
-    private(set) lazy var updaterController = SPUStandardUpdaterController(
-        startingUpdater: true,
-        updaterDelegate: self,
-        userDriverDelegate: self
-    )
-
-    /// The underlying updater.
-    var updater: SPUUpdater {
-        updaterController.updater
-    }
-
     /// A Boolean value that indicates whether to automatically check for updates.
     var automaticallyChecksForUpdates: Bool {
         get {
-            updater.automaticallyChecksForUpdates
+            UserDefaults.standard.object(forKey: "FireAutomaticallyChecksForUpdates") as? Bool ?? false
         }
         set {
             objectWillChange.send()
-            updater.automaticallyChecksForUpdates = newValue
-        }
-    }
-
-    /// A Boolean value that indicates whether to automatically download updates.
-    var automaticallyDownloadsUpdates: Bool {
-        get {
-            updater.automaticallyDownloadsUpdates
-        }
-        set {
-            objectWillChange.send()
-            updater.automaticallyDownloadsUpdates = newValue
+            UserDefaults.standard.set(newValue, forKey: "FireAutomaticallyChecksForUpdates")
         }
     }
 
@@ -60,84 +42,61 @@ final class UpdatesManager: NSObject, ObservableObject {
 
     /// Sets up the manager.
     func performSetup() {
-        _ = updaterController
-        configureCancellables()
-    }
-
-    /// Configures the internal observers for the manager.
-    private func configureCancellables() {
-        updater.publisher(for: \.canCheckForUpdates)
-            .assign(to: &$canCheckForUpdates)
-        updater.publisher(for: \.lastUpdateCheckDate)
-            .assign(to: &$lastUpdateCheckDate)
+        lastUpdateCheckDate = UserDefaults.standard.object(forKey: "FireLastUpdateCheckDate") as? Date
+        if automaticallyChecksForUpdates {
+            Task { await check(userInitiated: false) }
+        }
     }
 
     /// Checks for app updates.
     @objc func checkForUpdates() {
-        #if DEBUG
-        // Checking for updates hangs in debug mode.
-        let alert = NSAlert()
-        alert.messageText = "Checking for updates is not supported in debug mode."
-        alert.runModal()
-        #else
-        guard let appState else {
-            return
-        }
-        // Activate the app in case an alert needs to be displayed.
-        appState.activate(withPolicy: .regular)
-        appState.openSettingsWindow()
-        updater.checkForUpdates()
-        #endif
-    }
-}
-
-// MARK: UpdatesManager: SPUUpdaterDelegate
-extension UpdatesManager: @preconcurrency SPUUpdaterDelegate {
-    func updater(_ updater: SPUUpdater, willScheduleUpdateCheckAfterDelay delay: TimeInterval) {
-        guard let appState else {
-            return
-        }
-        appState.userNotificationManager.requestAuthorization()
-    }
-}
-
-// MARK: UpdatesManager: SPUStandardUserDriverDelegate
-extension UpdatesManager: @preconcurrency SPUStandardUserDriverDelegate {
-    var supportsGentleScheduledUpdateReminders: Bool { true }
-
-    func standardUserDriverShouldHandleShowingScheduledUpdate(
-        _ update: SUAppcastItem,
-        andInImmediateFocus immediateFocus: Bool
-    ) -> Bool {
-        if NSApp.isActive {
-            return immediateFocus
-        } else {
-            return false
-        }
+        Task { await check(userInitiated: true) }
     }
 
-    func standardUserDriverWillHandleShowingUpdate(
-        _ handleShowingUpdate: Bool,
-        forUpdate update: SUAppcastItem,
-        state: SPUUserUpdateState
-    ) {
-        guard let appState else {
-            return
-        }
-        if !state.userInitiated {
-            appState.userNotificationManager.addRequest(
-                with: .updateCheck,
-                title: "A new update is available",
-                body: "Version \(update.displayVersionString) is now available"
-            )
-        }
-    }
+    private func check(userInitiated: Bool) async {
+        do {
+            var request = URLRequest(url: Self.latestReleaseAPI)
+            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            request.timeoutInterval = 15
+            let (data, _) = try await URLSession.shared.data(for: request)
+            guard
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                let tag = json["tag_name"] as? String
+            else {
+                throw URLError(.cannotParseResponse)
+            }
+            let now = Date.now
+            lastUpdateCheckDate = now
+            UserDefaults.standard.set(now, forKey: "FireLastUpdateCheckDate")
 
-    func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
-        guard let appState else {
-            return
+            let latest = tag.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+            let isNewer = latest.compare(Constants.versionString, options: .numeric) == .orderedDescending
+            if isNewer {
+                let alert = NSAlert()
+                alert.messageText = "Fire \(latest) is available"
+                alert.informativeText = "You are using version \(Constants.versionString)."
+                alert.addButton(withTitle: "Open Download Page")
+                alert.addButton(withTitle: "Later")
+                appState?.activate(withPolicy: .regular)
+                if alert.runModal() == .alertFirstButtonReturn {
+                    NSWorkspace.shared.open(Self.releasesPage)
+                }
+            } else if userInitiated {
+                let alert = NSAlert()
+                alert.messageText = "Fire is up to date"
+                alert.informativeText = "Version \(Constants.versionString) is the latest version."
+                appState?.activate(withPolicy: .regular)
+                alert.runModal()
+            }
+        } catch {
+            if userInitiated {
+                let alert = NSAlert()
+                alert.messageText = "Could not check for updates"
+                alert.informativeText = error.localizedDescription
+                appState?.activate(withPolicy: .regular)
+                alert.runModal()
+            }
         }
-        appState.userNotificationManager.removeDeliveredNotifications(with: [.updateCheck])
     }
 }
 

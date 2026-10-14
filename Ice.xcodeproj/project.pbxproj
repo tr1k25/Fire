@@ -7,10 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		170423D92B56DE78004A2549 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 170423D82B56DE78004A2549 /* Sparkle */; };
 		175061912B1543DD003144CD /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 175061902B1543DD003144CD /* LaunchAtLogin */; };
 		1787C4272B16890B002F50DF /* AXSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1787C4262B16890B002F50DF /* AXSwift */; };
-		17F71BB52B880B4500905CBA /* CompactSlider in Frameworks */ = {isa = PBXBuildFile; productRef = 17F71BB42B880B4500905CBA /* CompactSlider */; };
 		7127A9FF2C4886D100D99DEF /* IfritStatic in Frameworks */ = {isa = PBXBuildFile; productRef = 7127A9FE2C4886D100D99DEF /* IfritStatic */; };
 /* End PBXBuildFile section */
 
@@ -38,11 +36,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				170423D92B56DE78004A2549 /* Sparkle in Frameworks */,
 				7127A9FF2C4886D100D99DEF /* IfritStatic in Frameworks */,
 				175061912B1543DD003144CD /* LaunchAtLogin in Frameworks */,
 				1787C4272B16890B002F50DF /* AXSwift in Frameworks */,
-				17F71BB52B880B4500905CBA /* CompactSlider in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,8 +84,6 @@
 			packageProductDependencies = (
 				175061902B1543DD003144CD /* LaunchAtLogin */,
 				1787C4262B16890B002F50DF /* AXSwift */,
-				170423D82B56DE78004A2549 /* Sparkle */,
-				17F71BB42B880B4500905CBA /* CompactSlider */,
 				7127A9FE2C4886D100D99DEF /* IfritStatic */,
 			);
 			productName = Ice;
@@ -123,8 +117,6 @@
 			packageReferences = (
 				1750618F2B1543DD003144CD /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 				1787C4252B16890B002F50DF /* XCRemoteSwiftPackageReference "AXSwift" */,
-				170423D72B56DE78004A2549 /* XCRemoteSwiftPackageReference "Sparkle" */,
-				17F71BB32B880B4500905CBA /* XCRemoteSwiftPackageReference "CompactSlider" */,
 				7127A9FB2C4881BC00D99DEF /* XCRemoteSwiftPackageReference "Ifrit" */,
 			);
 			productRefGroup = 7166832B2A767E6A006ABF84 /* Products */;
@@ -215,7 +207,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = K2ATHQPJDP;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -279,7 +270,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = K2ATHQPJDP;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -306,10 +296,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Ice/Ice.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1117;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -319,14 +309,15 @@
 				INFOPLIST_FILE = Ice/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Jordan Baird";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Jordan Baird, 2026 Tarik Mujkanovic";
+				INFOPLIST_KEY_CFBundleDisplayName = Fire;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.11.12;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jordanbaird.Ice;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.tr1k25.Fire;
+				PRODUCT_NAME = Fire;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -338,10 +329,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Ice/Ice.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1117;
+				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -351,14 +342,15 @@
 				INFOPLIST_FILE = Ice/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Jordan Baird";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2025 Jordan Baird, 2026 Tarik Mujkanovic";
+				INFOPLIST_KEY_CFBundleDisplayName = Fire;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.11.12;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jordanbaird.Ice;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.tr1k25.Fire;
+				PRODUCT_NAME = Fire;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -388,14 +380,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		170423D72B56DE78004A2549 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.2;
-			};
-		};
 		1750618F2B1543DD003144CD /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin-Modern";
@@ -412,14 +396,6 @@
 				minimumVersion = 0.3.2;
 			};
 		};
-		17F71BB32B880B4500905CBA /* XCRemoteSwiftPackageReference "CompactSlider" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/buh/CompactSlider";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.5;
-			};
-		};
 		7127A9FB2C4881BC00D99DEF /* XCRemoteSwiftPackageReference "Ifrit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ukushu/Ifrit";
@@ -431,11 +407,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		170423D82B56DE78004A2549 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 170423D72B56DE78004A2549 /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
 		175061902B1543DD003144CD /* LaunchAtLogin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 1750618F2B1543DD003144CD /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */;
@@ -445,11 +416,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1787C4252B16890B002F50DF /* XCRemoteSwiftPackageReference "AXSwift" */;
 			productName = AXSwift;
-		};
-		17F71BB42B880B4500905CBA /* CompactSlider */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 17F71BB32B880B4500905CBA /* XCRemoteSwiftPackageReference "CompactSlider" */;
-			productName = CompactSlider;
 		};
 		7127A9FE2C4886D100D99DEF /* IfritStatic */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -6,6 +6,15 @@
 import Cocoa
 import Combine
 
+private struct EventKey: Equatable {
+    let type: NSEvent.EventType
+    let timestamp: TimeInterval
+}
+
+private final class EventKeyBox {
+    var value: EventKey?
+}
+
 final class RunLoopLocalEventMonitor {
     private let runLoop = CFRunLoopGetCurrent()
     private let mode: RunLoop.Mode
@@ -25,33 +34,25 @@ final class RunLoopLocalEventMonitor {
     ) {
         self.mode = mode
         self.handler = handler
+        let lastKey = EventKeyBox()
         self.observer = CFRunLoopObserverCreateWithHandler(
             kCFAllocatorDefault,
             CFRunLoopActivity.beforeSources.rawValue,
             true,
             0
         ) { _, _ in
-            var events = [NSEvent]()
-
-            while let event = NSApp.nextEvent(matching: .any, until: nil, inMode: .default, dequeue: true) {
-                events.append(event)
+            // Peek at the next event without removing it from the queue. Draining and
+            // re-posting the whole queue makes this observer fire again immediately
+            // (busy loop, starved UI) on current macOS versions.
+            guard let event = NSApp.nextEvent(matching: mask, until: nil, inMode: .default, dequeue: false) else {
+                return
             }
-
-            for event in events {
-                var handledEvent: NSEvent?
-
-                if !mask.contains(NSEvent.EventTypeMask(rawValue: 1 << event.type.rawValue)) {
-                    handledEvent = event
-                } else if let eventFromHandler = handler(event) {
-                    handledEvent = eventFromHandler
-                }
-
-                guard let handledEvent else {
-                    continue
-                }
-
-                NSApp.postEvent(handledEvent, atStart: false)
+            let key = EventKey(type: event.type, timestamp: event.timestamp)
+            guard key != lastKey.value else {
+                return
             }
+            lastKey.value = key
+            _ = handler(event)
         }
     }
 

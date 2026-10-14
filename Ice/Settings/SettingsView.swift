@@ -53,7 +53,7 @@ struct SettingsView: View {
                     sidebarItem(for: identifier)
                 }
             } header: {
-                Text("Ice")
+                Text("Fire")
                     .font(.system(size: 36, weight: .medium))
                     .foregroundStyle(.primary)
                     .padding(.vertical, 5)

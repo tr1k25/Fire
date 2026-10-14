@@ -20,7 +20,7 @@ struct AboutSettingsPane: View {
 
     private var contributeURL: URL {
         // swiftlint:disable:next force_unwrapping
-        URL(string: "https://github.com/jordanbaird/Ice")!
+        URL(string: "https://github.com/tr1k25/Fire")!
     }
 
     private var issuesURL: URL {
@@ -29,7 +29,7 @@ struct AboutSettingsPane: View {
 
     private var donateURL: URL {
         // swiftlint:disable:next force_unwrapping
-        URL(string: "https://icemenubar.app/Donate")!
+        URL(string: "https://github.com/jordanbaird/Ice")!
     }
 
     private var lastUpdateCheckString: String {
@@ -78,7 +78,7 @@ struct AboutSettingsPane: View {
                 }
 
                 VStack(alignment: .leading) {
-                    Text("Ice")
+                    Text("Fire")
                         .font(.system(size: 72, weight: .medium))
                         .foregroundStyle(.primary)
 
@@ -98,7 +98,6 @@ struct AboutSettingsPane: View {
     private var updatesSection: some View {
         IceSection(options: .hasDividers) {
             automaticallyCheckForUpdates
-            automaticallyDownloadUpdates
             if updatesManager.canCheckForUpdates {
                 checkForUpdates
             }
@@ -111,14 +110,6 @@ struct AboutSettingsPane: View {
         Toggle(
             "Automatically check for updates",
             isOn: updatesManager.bindings.automaticallyChecksForUpdates
-        )
-    }
-
-    @ViewBuilder
-    private var automaticallyDownloadUpdates: some View {
-        Toggle(
-            "Automatically download updates",
-            isOn: updatesManager.bindings.automaticallyDownloadsUpdates
         )
     }
 
@@ -137,7 +128,7 @@ struct AboutSettingsPane: View {
     @ViewBuilder
     private var bottomBar: some View {
         HStack {
-            Button("Quit Ice") {
+            Button("Quit Fire") {
                 NSApp.terminate(nil)
             }
             Spacer()
@@ -150,7 +141,7 @@ struct AboutSettingsPane: View {
             Button("Report a Bug") {
                 openURL(issuesURL)
             }
-            Button("Support Ice", systemImage: "heart.circle.fill") {
+            Button("Based on Ice", systemImage: "heart.circle.fill") {
                 openURL(donateURL)
             }
         }

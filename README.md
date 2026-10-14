@@ -1,112 +1,124 @@
-<div align="center">
-    <img src="Ice/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width=200 height=200>
-    <h1>Ice</h1>
-</div>
+<p align="center">
+  <img src="docs/fire-icon.png" width="160" alt="Fire app icon">
+</p>
 
-Ice is a powerful menu bar management tool. While its primary function is hiding and showing menu bar items, it aims to cover a wide variety of additional features to make it one of the most versatile menu bar tools available.
+<h1 align="center">Fire</h1>
 
-![Banner](https://github.com/user-attachments/assets/4423085c-4e4b-4f3d-ad0f-90a217c03470)
+<p align="center">
+  A menu bar manager for macOS that works on <strong>macOS 27</strong>.<br>
+  Hide the menu bar items you don't need and bring them back with one click.
+</p>
 
-[![Download](https://img.shields.io/badge/download-latest-brightgreen?style=flat-square)](https://github.com/jordanbaird/Ice/releases/latest)
-![Platform](https://img.shields.io/badge/platform-macOS-blue?style=flat-square)
-![Requirements](https://img.shields.io/badge/requirements-macOS%2014%2B-fa4e49?style=flat-square)
-[![Sponsor](https://img.shields.io/badge/Sponsor%20%E2%9D%A4%EF%B8%8F-8A2BE2?style=flat-square)](https://github.com/sponsors/jordanbaird)
-[![Website](https://img.shields.io/badge/Website-015FBA?style=flat-square)](https://icemenubar.app)
-[![License](https://img.shields.io/github/license/jordanbaird/Ice?style=flat-square)](LICENSE)
+---
 
-> [!NOTE]
-> Ice is currently in active development. Some features have not yet been implemented. Download the latest release [here](https://github.com/jordanbaird/Ice/releases/latest) and see the roadmap below for upcoming features.
+Fire is a fork of [**Ice**](https://github.com/jordanbaird/Ice) by Jordan Baird, rebuilt so that it
+works on macOS 27, where the original no longer can.
 
-<a href="https://www.buymeacoffee.com/jordanbaird" target="_blank">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;">
-</a>
+> **Why a fork?** In macOS 27, menu bar items are no longer windows that other apps can see or
+> move. They are hosted by a new system process (`MenuBarAgent`). Ice relies on exactly those
+> windows, so on macOS 27 its menu bar layout is empty and hiding does nothing. Fire replaces that
+> part, and keeps the rest of Ice.
+
+## Features
+
+- Hide menu bar items behind the Fire icon and show them again with a click
+- Rearrange items with **⌘ + drag** (a macOS feature, nothing to learn)
+- Show hidden items on click, hover or scroll (inherited from Ice)
+- Menu bar appearance (tint, border, shadow, shape) (inherited from Ice)
+- Hotkeys, launch at login, automatic re-hide (inherited from Ice)
+
+## How it works on macOS 27
+
+Fire cannot push other apps' items out of the menu bar anymore, and the system does not allow a
+third-party app to tell `MenuBarAgent` to hide an item. So Fire hides items **visually**:
+
+1. It finds all menu bar items through the macOS **Accessibility** API (`AXExtrasMenuBar`).
+2. Everything to the **left of the Fire icon** is considered hidden.
+3. Fire covers that area with small panels that reproduce the menu bar background, captured with
+   **ScreenCaptureKit**. Clicks on the covered area are absorbed.
+
+Clicking the Fire icon removes the cover, clicking it again puts it back.
+
+### Using it
+
+- Hold **⌘** and drag items to the left of the Fire icon to hide them, or to its right to keep them
+  visible.
+- Drag the **Fire icon** itself to change where the boundary is.
+- Click the Fire icon to show or hide the items.
+
+### Limitations
+
+- The items still exist, they are only covered. Apps that read the menu bar (for example
+  screenshot tools) can still see them.
+- The *Menu Bar Layout* view in the settings stays empty on macOS 27. Arrange items with ⌘ + drag.
+- When an app starts or quits, the cover is updated within about a second.
+- Fire relies on private behaviour of macOS and may need updates with future macOS releases.
+
+## Requirements
+
+- macOS 14 or later (developed and tested on **macOS 27.0**, Apple silicon)
+- Permissions: **Accessibility** and **Screen & System Audio Recording**
+  (Fire asks for them on first launch)
 
 ## Install
 
-### Manual Installation
+### Download
 
-Download the "Ice.zip" file from the [latest release](https://github.com/jordanbaird/Ice/releases/latest) and move the unzipped app into your `Applications` folder.
+Download `Fire.zip` from the [latest release](https://github.com/tr1k25/Fire/releases/latest),
+unzip it and move `Fire.app` to your Applications folder.
 
-### Homebrew
+The app is signed ad hoc and not notarized, so macOS blocks the first launch. Open it with
+right-click → **Open**, or run:
 
-Install Ice using the following command:
-
-```sh
-brew install --cask jordanbaird-ice
+```bash
+xattr -dr com.apple.quarantine /Applications/Fire.app
 ```
 
-## Features/Roadmap
+### Build from source
 
-### Menu bar item management
+You need Xcode 27 (or a version with the macOS 27 SDK).
 
-- [x] Hide menu bar items
-- [x] "Always-hidden" menu bar section
-- [x] Show hidden menu bar items when hovering over the menu bar
-- [x] Show hidden menu bar items when an empty area in the menu bar is clicked
-- [x] Show hidden menu bar items by scrolling or swiping in the menu bar
-- [x] Automatically rehide menu bar items
-- [x] Hide application menus when they overlap with shown menu bar items
-- [x] Drag and drop interface to arrange individual menu bar items
-- [x] Display hidden menu bar items in a separate bar (e.g. for MacBooks with the notch)
-- [x] Search menu bar items
-- [x] Menu bar item spacing (BETA)
-- [ ] Profiles for menu bar layout
-- [ ] Individual spacer items
-- [ ] Menu bar item groups
-- [ ] Show menu bar items when trigger conditions are met
+```bash
+git clone https://github.com/tr1k25/Fire.git
+cd Fire
+./build.sh --install        # builds and installs to ~/Applications/Fire.app
+```
 
-### Menu bar appearance
+`./build.sh --universal` builds for Apple silicon and Intel.
 
-- [x] Menu bar tint (solid and gradient)
-- [x] Menu bar shadow
-- [x] Menu bar border
-- [x] Custom menu bar shapes (rounded and/or split)
-- [ ] Remove background behind menu bar
-- [ ] Rounded screen corners
-- [ ] Different settings for light/dark mode
+> Because the app is signed ad hoc, macOS treats every new build as a new app and asks for the
+> Accessibility and Screen Recording permissions again. Create a self-signed code signing
+> certificate and sign the build with it to avoid that.
 
-### Hotkeys
+## What changed compared to Ice
 
-- [x] Toggle individual menu bar sections
-- [x] Show the search panel
-- [x] Enable/disable the Ice Bar
-- [x] Show/hide section divider icons
-- [x] Toggle application menus
-- [ ] Enable/disable auto rehide
-- [ ] Temporarily show individual menu bar items
+- New `HiddenItemCover` that finds items through Accessibility and covers hidden ones
+- Hit-testing for "click on an empty menu bar area" uses Accessibility instead of window lists
+- Fixed a busy loop in the run loop event monitor that made the settings window unresponsive
+- Replaced the Sparkle updater with a lightweight check against GitHub releases
+- Bundled CompactSlider with a fix for the macOS 27 SDK
+- New name, icon and menu bar icon
 
-### Other
+## License and credits
 
-- [x] Launch at login
-- [x] Automatic updates
-- [ ] Menu bar widgets
+Fire is licensed under the **GNU General Public License v3.0**, like Ice. See [LICENSE](LICENSE).
 
-## Why does Ice only support macOS 14 and later?
+- **Ice** — Copyright © Jordan Baird, GPL-3.0 — https://github.com/jordanbaird/Ice
+- **CompactSlider** — Copyright © Alexey Bukhtin, MIT — https://github.com/buh/CompactSlider
+- **AXSwift**, **Ifrit**, **LaunchAtLogin-Modern** — see their repositories for licenses
 
-Ice uses a number of system APIs that are available starting in macOS 14. As such, there are no plans to support earlier versions of macOS.
+Fire is not affiliated with or endorsed by the Ice project.
 
-## Gallery
+---
 
-#### Show hidden menu bar items below the menu bar
+## Auf Deutsch
 
-![Ice Bar](https://github.com/user-attachments/assets/f1429589-6186-4e1b-8aef-592219d49b9b)
+**Fire** ist ein Menüleisten-Manager für macOS, der auf **macOS 27** funktioniert. Es basiert auf
+[Ice](https://github.com/jordanbaird/Ice), das dort nicht mehr läuft, weil macOS 27 die
+Menüleisten-Symbole nicht mehr als Fenster bereitstellt.
 
-#### Drag-and-drop interface to arrange menu bar items
+Fire findet die Symbole über die Bedienungshilfen, überdeckt alles links vom Fire-Symbol mit dem
+nachgebildeten Menüleisten-Hintergrund und blendet es per Klick wieder ein. Symbole ordnest du mit
+**⌘ + Ziehen** an. Dafür braucht Fire die Rechte *Bedienungshilfen* und *Bildschirmaufnahme*.
 
-![Menu Bar Layout](https://github.com/user-attachments/assets/095442ba-f2d0-4bb4-9632-91e26ef8d45b)
-
-#### Customize the menu bar's appearance
-
-![Menu Bar Appearance](https://github.com/user-attachments/assets/8c22c185-c3d2-49bb-971e-e1fc17df04b3)
-
-#### Menu bar item search
-
-![Menu Bar Item Search](https://github.com/user-attachments/assets/d1a7df3a-4989-4077-a0b1-8e7d5a1ba5b8)
-
-#### Custom menu bar item spacing
-
-![Menu Bar Item Spacing](https://github.com/user-attachments/assets/b196aa7e-184a-4d4c-b040-502f4aae40a6)
-
-## License
-
-Ice is available under the [GPL-3.0 license](LICENSE).
+Bauen: `./build.sh --install`. Lizenz: GPL-3.0.

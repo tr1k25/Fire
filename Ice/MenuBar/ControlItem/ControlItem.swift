@@ -24,7 +24,7 @@ final class ControlItem {
     /// Possible lengths for control items.
     enum Lengths {
         static let standard: CGFloat = NSStatusItem.variableLength
-        static let expanded: CGFloat = 10_000
+        static let expanded: CGFloat = 1
     }
 
     /// The control item's hiding state (`@Published`).
@@ -155,7 +155,7 @@ final class ControlItem {
                 }
                 if isVisible {
                     statusItem.length = switch section.name {
-                    case .visible: Lengths.standard
+                    case .visible: 33 // constant width: the icon must not shift the items next to it when toggling
                     case .hidden, .alwaysHidden:
                         switch state {
                         case .hideItems: Lengths.expanded
@@ -364,7 +364,10 @@ final class ControlItem {
         case .hidden, .alwaysHidden:
             switch state {
             case .hideItems:
-                isVisible = true
+                // Keep the divider exactly as wide as in the shown state. On macOS 27 items cannot
+                // be pushed out of the menu bar, and a width change here would shift the items
+                // next to it every time the section is toggled.
+                isVisible = appState.settingsManager.advancedSettingsManager.showSectionDividers
                 // Prevent the cell from highlighting while expanded.
                 button.cell?.isEnabled = false
                 // Cell still sometimes briefly flashes on expansion unless manually unhighlighted.
@@ -422,10 +425,10 @@ final class ControlItem {
             return hotkeySettingsManager.hotkey(withAction: action)
         }
 
-        let menu = NSMenu(title: "Ice")
+        let menu = NSMenu(title: "Fire")
 
         let settingsItem = NSMenuItem(
-            title: "Ice Settings…",
+            title: "Fire Settings…",
             action: #selector(AppDelegate.openSettingsWindow),
             keyEquivalent: ","
         )
@@ -504,7 +507,7 @@ final class ControlItem {
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
-            title: "Quit Ice",
+            title: "Quit Fire",
             action: #selector(NSApp.terminate),
             keyEquivalent: "q"
         )

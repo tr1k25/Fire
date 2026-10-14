@@ -490,8 +490,23 @@ extension EventManager {
         else {
             return false
         }
-        let menuBarItems = MenuBarItem.getMenuBarItems(on: screen.displayID, onScreenOnly: true, activeSpaceOnly: true)
-        return menuBarItems.contains { $0.frame.contains(mouseLocation) }
+        return isPointInsideMenuBarItem(mouseLocation, on: screen.displayID)
+    }
+
+    /// Returns a Boolean value that indicates whether the given point (CoreGraphics coordinates)
+    /// is within the bounds of a menu bar item.
+    ///
+    /// On macOS 27, menu bar items no longer have windows, so the item frames come from the
+    /// accessibility API.
+    func isPointInsideMenuBarItem(_ point: CGPoint, on displayID: CGDirectDisplayID) -> Bool {
+        if let appState {
+            let frames = appState.menuBarManager.accessibilityItemFrames
+            if frames.contains(where: { $0.insetBy(dx: -1, dy: -1).contains(point) }) {
+                return true
+            }
+        }
+        let menuBarItems = MenuBarItem.getMenuBarItems(on: displayID, onScreenOnly: true, activeSpaceOnly: true)
+        return menuBarItems.contains { $0.frame.contains(point) }
     }
 
     /// A Boolean value that indicates whether the mouse pointer is within
