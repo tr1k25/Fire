@@ -12,11 +12,11 @@ struct IceGroupBox<Header: View, Content: View, Footer: View>: View {
     private let padding: CGFloat
 
     private var backgroundShape: some InsettableShape {
-        RoundedRectangle(cornerRadius: 6, style: .circular)
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
     }
 
     init(
-        padding: CGFloat = 10,
+        padding: CGFloat = 14,
         @ViewBuilder header: () -> Header,
         @ViewBuilder content: () -> Content,
         @ViewBuilder footer: () -> Footer
@@ -28,7 +28,7 @@ struct IceGroupBox<Header: View, Content: View, Footer: View>: View {
     }
 
     init(
-        padding: CGFloat = 10,
+        padding: CGFloat = 14,
         @ViewBuilder content: () -> Content,
         @ViewBuilder footer: () -> Footer
     ) where Header == EmptyView {
@@ -42,7 +42,7 @@ struct IceGroupBox<Header: View, Content: View, Footer: View>: View {
     }
 
     init(
-        padding: CGFloat = 10,
+        padding: CGFloat = 14,
         @ViewBuilder header: () -> Header,
         @ViewBuilder content: () -> Content
     ) where Footer == EmptyView {
@@ -56,7 +56,7 @@ struct IceGroupBox<Header: View, Content: View, Footer: View>: View {
     }
 
     init(
-        padding: CGFloat = 10,
+        padding: CGFloat = 14,
         @ViewBuilder content: () -> Content
     ) where Header == EmptyView, Footer == EmptyView {
         self.init(padding: padding) {
@@ -70,7 +70,7 @@ struct IceGroupBox<Header: View, Content: View, Footer: View>: View {
 
     init(
         _ title: LocalizedStringKey,
-        padding: CGFloat = 10,
+        padding: CGFloat = 14,
         @ViewBuilder content: () -> Content
     ) where Header == Text, Footer == EmptyView {
         self.init(padding: padding) {
@@ -90,10 +90,10 @@ struct IceGroupBox<Header: View, Content: View, Footer: View>: View {
             .padding(padding)
             .background {
                 backgroundShape
-                    .fill(.quinary)
+                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.6))
                     .overlay {
                         backgroundShape
-                            .strokeBorder(.quaternary)
+                            .strokeBorder(Color.primary.opacity(0.08))
                     }
             }
             footer

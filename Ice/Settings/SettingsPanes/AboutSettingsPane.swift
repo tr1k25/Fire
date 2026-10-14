@@ -69,28 +69,36 @@ struct AboutSettingsPane: View {
     @ViewBuilder
     private var appIconAndCopyrightSection: some View {
         IceSection(options: .plain) {
-            HStack(spacing: 10) {
+            VStack(spacing: 14) {
                 if let nsImage = NSImage(named: NSImage.applicationIconName) {
                     Image(nsImage: nsImage)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 225)
+                        .frame(width: 150)
+                        .shadow(color: .red.opacity(0.25), radius: 18, y: 8)
                 }
 
-                VStack(alignment: .leading) {
+                VStack(spacing: 4) {
                     Text("Fire")
-                        .font(.system(size: 72, weight: .medium))
+                        .font(.system(size: 46, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
 
+                    Text("Menu bar manager for macOS 27")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(spacing: 2) {
                     Text("Version \(Constants.versionString)")
-                        .font(.system(size: 18))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.secondary)
 
-                    Text(Constants.copyrightString)
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Based on Ice by Jordan Baird · GPL-3.0")
+                        .font(.system(size: 12))
                         .foregroundStyle(.tertiary)
                 }
             }
+            .frame(maxWidth: .infinity)
         }
     }
 

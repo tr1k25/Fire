@@ -102,6 +102,9 @@ final class GeneralSettingsManager: ObservableObject {
             }
         }
 
+        // The Fire Bar relies on menu bar item windows, which macOS 27 no longer provides.
+        useIceBar = false
+
         if let data = Defaults.data(forKey: .iceIcon) {
             do {
                 iceIcon = try decoder.decode(ControlItemImageSet.self, from: data)

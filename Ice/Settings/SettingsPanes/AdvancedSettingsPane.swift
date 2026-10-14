@@ -29,18 +29,11 @@ struct AdvancedSettingsPane: View {
     var body: some View {
         IceForm {
             IceSection {
-                hideApplicationMenus
-                showSectionDividers
                 showAllSectionsOnUserDrag
                 showContextMenuOnRightClick
             }
             IceSection {
-                enableAlwaysHiddenSection
-                canToggleAlwaysHiddenSection
-            }
-            IceSection {
                 showOnHoverDelaySlider
-                tempShowIntervalSlider
             }
             IceSection("Permissions") {
                 allPermissions

@@ -465,7 +465,7 @@ final class ControlItem {
                 continue
             }
             let item = NSMenuItem(
-                title: "\(section.isHidden ? "Show" : "Hide") the \(name.displayString) Section",
+                title: "\(section.isHidden ? "Show" : "Hide") Hidden Items",
                 action: #selector(toggleMenuBarSection),
                 keyEquivalent: ""
             )

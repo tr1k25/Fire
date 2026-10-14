@@ -53,10 +53,24 @@ struct SettingsView: View {
                     sidebarItem(for: identifier)
                 }
             } header: {
-                Text("Fire")
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(.primary)
-                    .padding(.vertical, 5)
+                HStack(spacing: 8) {
+                    Image(.fireOpen)
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30, height: 30)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.62, blue: 0.15), Color(red: 1.0, green: 0.22, blue: 0.12)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    Text("Fire")
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.vertical, 8)
             }
             .collapsible(false)
         }
@@ -87,7 +101,7 @@ struct SettingsView: View {
     private func sidebarItem(for identifier: SettingsNavigationIdentifier) -> some View {
         Label {
             Text(identifier.localized)
-                .font(.system(size: sidebarItemFontSize))
+                .font(.system(size: sidebarItemFontSize, weight: .medium))
                 .padding(.leading, 2)
         } icon: {
             icon(for: identifier).view
@@ -97,12 +111,12 @@ struct SettingsView: View {
 
     private func icon(for identifier: SettingsNavigationIdentifier) -> IconResource {
         switch identifier {
-        case .general: .systemSymbol("gearshape")
-        case .menuBarLayout: .systemSymbol("rectangle.topthird.inset.filled")
-        case .menuBarAppearance: .systemSymbol("swatchpalette")
-        case .hotkeys: .systemSymbol("keyboard")
+        case .general: .systemSymbol("slider.horizontal.3")
+        case .menuBarLayout: .systemSymbol("menubar.rectangle")
+        case .menuBarAppearance: .systemSymbol("paintbrush.pointed")
+        case .hotkeys: .systemSymbol("command")
         case .advanced: .systemSymbol("gearshape.2")
-        case .about: .assetCatalog(.iceCubeStroke)
+        case .about: .systemSymbol("flame.fill")
         }
     }
 }

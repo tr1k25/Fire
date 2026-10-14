@@ -40,16 +40,16 @@ extension ControlItemImageSet {
     /// The default image set for the Ice icon.
     static let defaultIceIcon = ControlItemImageSet(
         name: .fire,
-        hidden: .catalog("FireStroke"),
-        visible: .catalog("FireFill")
+        hidden: .catalog("FireClosed"),
+        visible: .catalog("FireOpen")
     )
 
     /// The image sets that the user can choose to display in the Ice icon.
     static let userSelectableIceIcons = [
         ControlItemImageSet(
             name: .fire,
-            hidden: .catalog("FireStroke"),
-            visible: .catalog("FireFill")
+            hidden: .catalog("FireClosed"),
+            visible: .catalog("FireOpen")
         ),
         ControlItemImageSet(
             name: .arrow,
@@ -75,11 +75,6 @@ extension ControlItemImageSet {
             name: .ellipsis,
             hidden: .catalog("EllipsisFill"),
             visible: .catalog("EllipsisStroke")
-        ),
-        ControlItemImageSet(
-            name: .iceCube,
-            hidden: .catalog("IceCubeStroke"),
-            visible: .catalog("IceCubeFill")
         ),
         ControlItemImageSet(
             name: .sunglasses,

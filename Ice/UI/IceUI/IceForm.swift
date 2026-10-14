@@ -28,8 +28,8 @@ struct IceForm<Content: View>: View {
 
     init(
         alignment: HorizontalAlignment = .center,
-        padding: CGFloat = 20,
-        spacing: CGFloat = 10,
+        padding: CGFloat = 24,
+        spacing: CGFloat = 16,
         @ViewBuilder content: () -> Content
     ) {
         self.init(

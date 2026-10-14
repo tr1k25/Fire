@@ -61,18 +61,12 @@ struct GeneralSettingsPane: View {
                 iceIconOptions
             }
             IceSection {
-                iceBarOptions
-            }
-            IceSection {
                 showOnClick
                 showOnHover
                 showOnScroll
             }
             IceSection {
                 autoRehideOptions
-            }
-            IceSection {
-                spacingOptions
             }
         }
         .alert(isPresented: $isPresentingError, error: presentedError) {

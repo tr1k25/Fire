@@ -330,16 +330,9 @@ extension EventManager {
             return
         }
 
-        // Show all items, including section dividers.
+        // Show all items, so that hidden items can be dragged.
         for section in appState.menuBarManager.sections {
             section.controlItem.state = .showItems
-            guard
-                section.controlItem.isSectionDivider,
-                !section.controlItem.isVisible
-            else {
-                continue
-            }
-            section.controlItem.isVisible = true
         }
     }
 

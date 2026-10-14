@@ -22,10 +22,13 @@ works on macOS 27, where the original no longer can.
 ## Features
 
 - Hide menu bar items behind the Fire icon and show them again with a click
-- Rearrange items with **⌘ + drag** (a macOS feature, nothing to learn)
-- Show hidden items on click, hover or scroll (inherited from Ice)
-- Menu bar appearance (tint, border, shadow, shape) (inherited from Ice)
-- Hotkeys, launch at login, automatic re-hide (inherited from Ice)
+- **Menu Bar Items** page: see every item with its app icon, and hide or show it with one button
+- **Search** (hotkey): find a menu bar item by name and open its menu, even if it is hidden
+- The Fire icon shows its mood: eyes open while items are shown, eyes closed while they are hidden
+- Show hidden items on click, hover or scroll
+- Rearrange items with **⌘ + drag**
+- Menu bar appearance (tint, border, shadow, shape)
+- Hotkeys, launch at login, automatic re-hide
 
 ## How it works on macOS 27
 
@@ -41,16 +44,19 @@ Clicking the Fire icon removes the cover, clicking it again puts it back.
 
 ### Using it
 
-- Hold **⌘** and drag items to the left of the Fire icon to hide them, or to its right to keep them
-  visible.
-- Drag the **Fire icon** itself to change where the boundary is.
+- Open **Settings → Menu Bar Items** and press **Hide** or **Show** next to an item. Fire performs
+  the ⌘ + drag for you.
+- Or hold **⌘** and drag items yourself: to the left of the Fire icon to hide them, to its right to
+  keep them visible. Drag the **Fire icon** to change where the boundary is.
 - Click the Fire icon to show or hide the items.
 
 ### Limitations
 
 - The items still exist, they are only covered. Apps that read the menu bar (for example
   screenshot tools) can still see them.
-- The *Menu Bar Layout* view in the settings stays empty on macOS 27. Arrange items with ⌘ + drag.
+- The Ice Bar (a second bar below the menu bar), the always-hidden section, item spacing and
+  "hide application menus" were removed, because they depend on the menu bar item windows that
+  macOS 27 no longer provides.
 - When an app starts or quits, the cover is updated within about a second.
 - Fire relies on private behaviour of macOS and may need updates with future macOS releases.
 
@@ -93,11 +99,13 @@ cd Fire
 ## What changed compared to Ice
 
 - New `HiddenItemCover` that finds items through Accessibility and covers hidden ones
+- New *Menu Bar Items* page and search, built on the same Accessibility model
+- Items can be hidden or shown with one button (synthetic ⌘ + drag, verified through Accessibility)
 - Hit-testing for "click on an empty menu bar area" uses Accessibility instead of window lists
 - Fixed a busy loop in the run loop event monitor that made the settings window unresponsive
 - Replaced the Sparkle updater with a lightweight check against GitHub releases
 - Bundled CompactSlider with a fix for the macOS 27 SDK
-- New name, icon and menu bar icon
+- New name, icon, menu bar icon (open and closed eyes) and a refreshed settings design
 
 ## License and credits
 

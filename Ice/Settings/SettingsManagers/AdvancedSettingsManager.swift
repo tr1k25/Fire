@@ -60,6 +60,12 @@ final class AdvancedSettingsManager: ObservableObject {
         Defaults.ifPresent(key: .tempShowInterval, assign: &tempShowInterval)
         Defaults.ifPresent(key: .showAllSectionsOnUserDrag, assign: &showAllSectionsOnUserDrag)
         Defaults.ifPresent(key: .showContextMenuOnRightClick, assign: &showContextMenuOnRightClick)
+
+        // These features rely on menu bar item windows, which macOS 27 no longer provides.
+        hideApplicationMenus = false
+        showSectionDividers = false
+        enableAlwaysHiddenSection = false
+        canToggleAlwaysHiddenSection = false
     }
 
     private func configureCancellables() {

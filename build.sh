@@ -5,7 +5,9 @@
 #         ./build.sh --universal  # arm64 + x86_64
 #         ./build.sh --install    # additionally copy to ~/Applications
 #
-# The app is signed ad hoc (no Apple Developer account needed).
+# The app is signed ad hoc by default (no Apple Developer account needed).
+# Set SIGN_IDENTITY (and optionally SIGN_KEYCHAIN) to sign with a local certificate instead.
+# macOS then keeps the Accessibility and Screen Recording permissions across rebuilds.
 set -e
 cd "${0:A:h}"
 
@@ -34,7 +36,13 @@ grep -q "BUILD SUCCEEDED" build/xcodebuild.log || { echo "Build failed, see buil
 APP="build/DerivedData/Build/Products/Release/Fire.app"
 rm -rf build/Fire.app
 cp -R "$APP" build/Fire.app
-codesign --force --deep --sign - --options runtime build/Fire.app
+if [ -n "$SIGN_IDENTITY" ]; then
+  KEYCHAIN_ARGS=()
+  [ -n "$SIGN_KEYCHAIN" ] && KEYCHAIN_ARGS=(--keychain "$SIGN_KEYCHAIN")
+  codesign --force --deep --sign "$SIGN_IDENTITY" "${KEYCHAIN_ARGS[@]}" --options runtime build/Fire.app
+else
+  codesign --force --deep --sign - --options runtime build/Fire.app
+fi
 codesign --verify --deep --strict build/Fire.app && echo "Built: $PWD/build/Fire.app"
 
 if [ "$INSTALL" = "1" ]; then

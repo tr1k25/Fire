@@ -12,20 +12,52 @@ import ScreenCaptureKit
 /// out of the menu bar (macOS 27: items are hosted by `MenuBarAgent` and have no
 /// windows that other processes can see or move).
 ///
-/// Items to the left of the Ice icon are located through the accessibility API and
+/// Items to the left of the Fire icon are located through the accessibility API and
 /// covered with small panels that reproduce the menu bar background.
+///
+/// The class also exposes the list of items it found, so that the settings and the search
+/// panel can show them, and it can move items by performing a Command + drag.
 @MainActor
-final class HiddenItemCover {
-    private struct ItemRect: Equatable {
+final class HiddenItemCover: ObservableObject {
+    /// An item in the menu bar, found through the accessibility API.
+    struct Item: Identifiable, Equatable {
+        let id: String
         let pid: pid_t
+        let index: Int
         let frame: CGRect
+        let title: String
+        let appName: String
+        let bundleIdentifier: String?
+        let isSystem: Bool
+        let element: AXUIElement
+
+        var displayName: String {
+            title.isEmpty || title == appName ? appName : "\(appName) – \(title)"
+        }
+
+        var icon: NSImage? {
+            NSRunningApplication(processIdentifier: pid)?.icon
+        }
+
+        static func == (lhs: Item, rhs: Item) -> Bool {
+            lhs.id == rhs.id && lhs.frame == rhs.frame && lhs.title == rhs.title
+        }
     }
+
+    /// The menu bar items of other apps and the system, from left to right.
+    @Published private(set) var items = [Item]()
+
+    /// The left edge of the Fire icon in CoreGraphics coordinates.
+    @Published private(set) var delimiter: CGFloat?
+
+    /// A Boolean value that indicates whether an item is currently being moved.
+    @Published private(set) var isMovingItem = false
 
     private weak var appState: AppState?
     private var cancellables = Set<AnyCancellable>()
     private var pollTask: Task<Void, Never>?
     private var panels = [CoverPanel]()
-    private var cachedItems = [ItemRect]()
+    private var cachedItems = [Item]()
     private var isCovering = false
     /// Left edge of the Ice icon while the items are hidden. The icon is wider in this state, so
     /// its left edge sits further to the left than in the shown state.
@@ -84,6 +116,16 @@ final class HiddenItemCover {
                 .store(in: &cancellables)
         }
 
+        // The cover reproduces the menu bar, including tint and shadow of the appearance settings.
+        appState.appearanceManager.$configuration
+            .dropFirst()
+            .debounce(for: 0.3, scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.backgroundCache.removeAll()
+                self?.refreshPanels()
+            }
+            .store(in: &cancellables)
+
         NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
                 self?.backgroundCache.removeAll()
@@ -109,6 +151,54 @@ final class HiddenItemCover {
         Task { await scan() }
     }
 
+    /// Rescans the menu bar items right now and waits for the result.
+    func refresh() async {
+        await scan()
+    }
+
+    /// Returns a readable name for a system menu bar item identifier like `com.apple.menuextra.wifi`.
+    private static func systemItemName(for identifier: String) -> String {
+        guard !identifier.isEmpty else {
+            return "System"
+        }
+        let key = identifier.split(separator: ".").last.map(String.init) ?? identifier
+        let names = [
+            "wifi": "Wi-Fi",
+            "bluetooth": "Bluetooth",
+            "clock": "Clock",
+            "controlcenter": "Control Center",
+            "now-playing": "Now Playing",
+            "battery": "Battery",
+            "airplay": "AirPlay",
+            "airdrop": "AirDrop",
+            "focus": "Focus",
+            "display": "Display",
+            "sound": "Sound",
+            "spotlight": "Spotlight",
+            "siri": "Siri",
+            "textinput": "Input Menu",
+            "vpn": "VPN",
+            "timemachine": "Time Machine",
+            "user": "Fast User Switching",
+            "screentime": "Screen Time",
+            "keyboard": "Keyboard Brightness",
+            "stage-manager": "Stage Manager",
+            "weather": "Weather",
+        ]
+        if let name = names[key.lowercased()] {
+            return name
+        }
+        return key.replacingOccurrences(of: "-", with: " ").capitalized
+    }
+
+    private struct RawItem {
+        let pid: pid_t
+        let index: Int
+        let frame: CGRect
+        let title: String
+        let element: AXUIElement
+    }
+
     private func scan() async {
         guard AXIsProcessTrusted() else {
             return
@@ -120,8 +210,15 @@ final class HiddenItemCover {
                 ($0.activationPolicy != .prohibited || $0.bundleIdentifier == "com.apple.MenuBarAgent")
             }
             .map(\.processIdentifier)
-        let items = await Task.detached(priority: .utility) { () -> [ItemRect] in
-            var result = [ItemRect]()
+        let raw = await Task.detached(priority: .utility) { () -> [RawItem] in
+            var result = [RawItem]()
+            func string(_ element: AXUIElement, _ attribute: String) -> String? {
+                var value: CFTypeRef?
+                guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success else {
+                    return nil
+                }
+                return value as? String
+            }
             for pid in apps {
                 let element = AXUIElementCreateApplication(pid)
                 AXUIElementSetMessagingTimeout(element, 0.3)
@@ -139,7 +236,7 @@ final class HiddenItemCover {
                 else {
                     continue
                 }
-                for child in children {
+                for (index, child) in children.enumerated() {
                     var position: CFTypeRef?
                     var size: CFTypeRef?
                     AXUIElementCopyAttributeValue(child, kAXPositionAttribute as CFString, &position)
@@ -154,13 +251,165 @@ final class HiddenItemCover {
                     else {
                         continue
                     }
-                    result.append(ItemRect(pid: pid, frame: CGRect(origin: point, size: extent)))
+                    var title = string(child, kAXTitleAttribute)
+                        ?? string(child, kAXDescriptionAttribute)
+                        ?? string(child, kAXHelpAttribute)
+                        ?? ""
+                    if title.isEmpty {
+                        // System items are hosted in a group; the identifier is on the first child.
+                        var grandChildren: CFTypeRef?
+                        if
+                            AXUIElementCopyAttributeValue(child, kAXChildrenAttribute as CFString, &grandChildren) == .success,
+                            let first = (grandChildren as? [AXUIElement])?.first
+                        {
+                            title = string(first, kAXIdentifierAttribute)
+                                ?? string(first, kAXTitleAttribute)
+                                ?? string(first, kAXDescriptionAttribute)
+                                ?? ""
+                        }
+                    }
+                    result.append(RawItem(
+                        pid: pid,
+                        index: index,
+                        frame: CGRect(origin: point, size: extent),
+                        title: title,
+                        element: child
+                    ))
                 }
             }
             return result
         }.value
-        cachedItems = items
+
+        var seenPerApp = [pid_t: Int]()
+        let height = barHeight
+        let mapped: [Item] = raw
+            .filter { $0.frame.minY < height && $0.frame.maxY > 0 }
+            .sorted { $0.frame.minX < $1.frame.minX }
+            .map { item in
+                let app = NSRunningApplication(processIdentifier: item.pid)
+                let bundleID = app?.bundleIdentifier
+                let isSystem = bundleID == "com.apple.MenuBarAgent"
+                var name = app?.localizedName ?? "Unknown"
+                var title = item.title
+                if isSystem {
+                    name = Self.systemItemName(for: title)
+                    title = ""
+                } else {
+                    seenPerApp[item.pid, default: 0] += 1
+                    if title.isEmpty, seenPerApp[item.pid, default: 0] > 1 {
+                        title = "Item \(seenPerApp[item.pid, default: 0])"
+                    }
+                }
+                return Item(
+                    id: "\(item.pid)#\(item.index)",
+                    pid: item.pid,
+                    index: item.index,
+                    frame: item.frame,
+                    title: title,
+                    appName: name,
+                    bundleIdentifier: bundleID,
+                    isSystem: isSystem,
+                    element: item.element
+                )
+            }
+        if mapped != cachedItems {
+            items = mapped
+        }
+        cachedItems = mapped
         refreshPanels()
+    }
+
+    // MARK: Actions
+
+    /// A Boolean value that indicates whether the item is on the hidden side of the Fire icon.
+    func isHidden(_ item: Item) -> Bool {
+        guard let delimiter else {
+            return false
+        }
+        return item.frame.maxX <= delimiter + 1
+    }
+
+    /// Opens the menu of the item, as if it had been clicked.
+    @discardableResult
+    func open(_ item: Item) -> Bool {
+        AXUIElementPerformAction(item.element, kAXPressAction as CFString) == .success
+    }
+
+    /// Hides or shows the item by moving it to the other side of the Fire icon.
+    ///
+    /// This performs a Command + drag with synthetic mouse events and checks the result with the
+    /// accessibility API. It retries with different drop positions.
+    func setHidden(_ hide: Bool, for item: Item) async -> Bool {
+        guard
+            AXIsProcessTrusted(),
+            let appState,
+            let iconFrame = appState.menuBarManager.section(withName: .visible)?.controlItem.window?.frame,
+            iconFrame.width > 0
+        else {
+            return false
+        }
+        guard !isMovingItem else {
+            return false
+        }
+        isMovingItem = true
+        refreshPanels()
+        defer {
+            isMovingItem = false
+            refreshPanels()
+        }
+        // Give the cover a moment to disappear.
+        try? await Task.sleep(for: .milliseconds(150))
+
+        let offsets: [CGFloat] = [6, 22, 40]
+        for offset in offsets {
+            await scan()
+            guard let current = cachedItems.first(where: { $0.id == item.id }) else {
+                return false
+            }
+            if hide, current.frame.maxX <= iconFrame.minX + 1 { return true }
+            if !hide, current.frame.minX >= iconFrame.minX + 8 { return true }
+
+            let targetX = hide ? iconFrame.minX - offset : iconFrame.maxX + offset
+            await commandDrag(from: CGPoint(x: current.frame.midX, y: barHeight / 2), toX: targetX)
+            try? await Task.sleep(for: .milliseconds(350))
+            await scan()
+            if let moved = cachedItems.first(where: { $0.id == item.id }) {
+                if hide, moved.frame.maxX <= iconFrame.minX + 1 { return true }
+                if !hide, moved.frame.minX >= iconFrame.minX + 8 { return true }
+            }
+        }
+        return false
+    }
+
+    /// Performs a Command + drag from the given point horizontally to the target x position.
+    private func commandDrag(from start: CGPoint, toX endX: CGFloat) async {
+        let savedLocation = CGEvent(source: nil)?.location ?? .zero
+        let source = CGEventSource(stateID: .hidSystemState)
+
+        func post(_ type: CGEventType, x: CGFloat) {
+            let event = CGEvent(
+                mouseEventSource: source,
+                mouseType: type,
+                mouseCursorPosition: CGPoint(x: x, y: start.y),
+                mouseButton: .left
+            )
+            event?.flags = .maskCommand
+            event?.post(tap: .cghidEventTap)
+        }
+
+        post(.mouseMoved, x: start.x)
+        try? await Task.sleep(for: .milliseconds(80))
+        post(.leftMouseDown, x: start.x)
+        try? await Task.sleep(for: .milliseconds(80))
+        let steps = 24
+        for step in 1...steps {
+            post(.leftMouseDragged, x: start.x + (endX - start.x) * CGFloat(step) / CGFloat(steps))
+            try? await Task.sleep(for: .milliseconds(16))
+        }
+        try? await Task.sleep(for: .milliseconds(120))
+        post(.leftMouseUp, x: endX)
+        try? await Task.sleep(for: .milliseconds(150))
+        CGWarpMouseCursorPosition(savedLocation)
     }
 
     // MARK: Panels
@@ -221,6 +470,7 @@ final class HiddenItemCover {
         }
         let height = barHeight
         let candidates = cachedItems
+            .filter { !$0.isSystem }
             .map(\.frame)
             .filter { frame in
                 frame.minY < height &&
@@ -230,7 +480,13 @@ final class HiddenItemCover {
         guard let leftmost = candidates.map(\.minX).min() else {
             return []
         }
-        let minX = max(screen.frame.minX, leftmost - 24)
+        // Leave room for small layout shifts, but never cover the application menus.
+        var lowerBound = screen.frame.minX
+        if let displayID = Optional(screen.displayID),
+           let menuFrame = appState?.menuBarManager.getApplicationMenuFrame(for: displayID) {
+            lowerBound = max(lowerBound, menuFrame.maxX + 6)
+        }
+        let minX = max(lowerBound, leftmost - 48)
         let maxX = delimiterX - 1
         guard maxX > minX else {
             return []
@@ -241,6 +497,10 @@ final class HiddenItemCover {
     private func refreshPanels() {
         guard let screen = NSScreen.main else {
             return
+        }
+        let currentDelimiter = delimiterX
+        if delimiter != currentDelimiter {
+            delimiter = currentDelimiter
         }
         var runs = plannedRuns()
         if runs.isEmpty {
@@ -271,8 +531,9 @@ final class HiddenItemCover {
             if !panel.isVisible {
                 panel.orderFrontRegardless()
             }
-            panel.alphaValue = isCovering ? 1 : 0
-            panel.ignoresMouseEvents = !isCovering
+            let covers = isCovering && !isMovingItem
+            panel.alphaValue = covers ? 1 : 0
+            panel.ignoresMouseEvents = !covers
         }
     }
 
@@ -331,7 +592,7 @@ private final class CoverPanel: NSPanel {
             backing: .buffered,
             defer: true
         )
-        level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 2)
         backgroundColor = .clear
         isOpaque = true
         hasShadow = false

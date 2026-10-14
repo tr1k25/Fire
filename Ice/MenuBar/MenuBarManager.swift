@@ -34,12 +34,13 @@ final class MenuBarManager: ObservableObject {
     /// The managed sections in the menu bar.
     private(set) var sections = [MenuBarSection]()
 
-    /// Covers hidden items on macOS versions where they cannot be pushed out of the menu bar.
-    private var hiddenItemCover: HiddenItemCover?
+    /// Finds the menu bar items through the accessibility API, covers the hidden ones and
+    /// moves items between the hidden and the visible side.
+    let itemCover: HiddenItemCover
 
     /// The frames of the menu bar items found through the accessibility API (CoreGraphics coordinates).
     var accessibilityItemFrames: [CGRect] {
-        hiddenItemCover?.allItemFrames ?? []
+        itemCover.allItemFrames
     }
 
     /// The panel that contains the Ice Bar interface.
@@ -58,6 +59,7 @@ final class MenuBarManager: ObservableObject {
     init(appState: AppState) {
         self.iceBarPanel = IceBarPanel(appState: appState)
         self.searchPanel = MenuBarSearchPanel(appState: appState)
+        self.itemCover = HiddenItemCover(appState: appState)
         self.appState = appState
     }
 
@@ -66,11 +68,7 @@ final class MenuBarManager: ObservableObject {
         initializeSections()
         configureCancellables()
         iceBarPanel.performSetup()
-        if let appState {
-            let cover = HiddenItemCover(appState: appState)
-            hiddenItemCover = cover
-            cover.performSetup()
-        }
+        itemCover.performSetup()
     }
 
     /// Performs the initial setup of the menu bar manager's sections.

@@ -88,7 +88,8 @@ final class MenuBarOverlayPanel: NSPanel {
             backing: .buffered,
             defer: false
         )
-        self.level = .statusBar
+        // One level above the menu bar items, which are hosted at the status bar level.
+        self.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         self.title = "Menu Bar Overlay"
         self.backgroundColor = .clear
         self.hasShadow = false

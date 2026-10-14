@@ -289,6 +289,34 @@ final class MenuBarSection {
         }
 
         rehideMonitor?.start()
+
+        // Start counting right away if the mouse is already outside of the menu bar.
+        if
+            let screen = NSScreen.main,
+            NSEvent.mouseLocation.y < screen.visibleFrame.maxY,
+            rehideTimer == nil
+        {
+            rehideTimer = .scheduledTimer(
+                withTimeInterval: appState.settingsManager.generalSettingsManager.rehideInterval,
+                repeats: false
+            ) { [weak self] _ in
+                guard
+                    let self,
+                    let screen = NSScreen.main
+                else {
+                    return
+                }
+                if NSEvent.mouseLocation.y < screen.visibleFrame.maxY {
+                    Task {
+                        await self.hide()
+                    }
+                } else {
+                    Task {
+                        await self.startRehideChecks()
+                    }
+                }
+            }
+        }
     }
 
     /// Stops running checks to determine when to rehide the section.
